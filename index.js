@@ -16,9 +16,12 @@ const tabs = [
 ];
 
 let selectedTab = tabs[0];
-let loadingTimer;
+let maxListItemNumber = 10;
+let lastItemListNumber = 0;
 
 function hideContents() {
+  maxListItemNumber = 10;
+  lastItemListNumber = 0;
   $list.childNodes.forEach((n) => {
     if (n !== $loadingIcon) {
       $list.removeChild(n);
@@ -30,7 +33,11 @@ function setList(json) {
   const node = document.createElement('div');
   node.className = 'list-group';
 
-  for (let i = 0; i < json.length; i += 1) {
+  for (
+    let i = lastItemListNumber;
+    i < json.length && i < maxListItemNumber;
+    i += 1
+  ) {
     const listItem = document.createElement('a');
     listItem.href = `${json[i].url}`;
     listItem.className = 'list-group-item';
@@ -52,8 +59,10 @@ function setList(json) {
     listItem.appendChild(title);
     listItem.appendChild(cp);
     node.appendChild(listItem);
+    lastItemListNumber += 1;
   }
-  $list.prepend(node);
+  $list.insertBefore(node, $loadingIcon);
+  //$list.prepend(node);
 }
 
 function getData(url) {
@@ -89,5 +98,14 @@ for (let i = 0; i < tabs.length; i += 1) {
     }, 1000);
   });
 }
+
+$showMoreBtn.addEventListener('click', () => {
+  showLoading();
+  setTimeout(() => {
+    hideLoading();
+    maxListItemNumber += 10;
+    getData(`${BASEURL}${selectedTab.PARAM}`);
+  }, 1000);
+});
 
 hideLoading();
