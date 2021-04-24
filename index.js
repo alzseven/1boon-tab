@@ -16,20 +16,44 @@ const tabs = [
 ];
 
 let selectedTab = tabs[0];
+let loadingTimer;
+
+function hideContents() {
+  $list.childNodes.forEach((n) => {
+    if (n != $loadingIcon) {
+      $list.removeChild(n);
+    }
+  });
+}
 
 function setList(json) {
-  let html = '<div class="list-group">';
+  let node = document.createElement("div");
+  node.className = "list-group";
+
   for (let i = 0; i < json.length; i += 1) {
-    html += `<a href="${json[i]["url"]}" class="list-group-item list-group-item-action">
-            <div class="d-flex w-100 justify-content-between">
-              <img src="${json[i]["img"]}" class="img img-thumbnail"></img>
-            </div>
-            <p class="mb-1">${json[i]["title"]}</p>
-            <small>${json[i]["cp"]}</small>
-          </a>`;
+    const listItem = document.createElement("a");
+    listItem.href = `${json[i]["url"]}`;
+    listItem.className = "list-group-item";
+    listItem.classList.add("list-group-item-action");
+
+    const img = document.createElement("img");
+    img.src = `${json[i]["img"]}`;
+    img.className = "img";
+    img.classList.add("img-thumbnail");
+
+    const title = document.createElement("p");
+    title.className = "mb-1";
+    title.innerText = `${json[i]["title"]}`;
+
+    const cp = document.createElement("small");
+    cp.innerText = `${json[i]["cp"]}`;
+
+    listItem.appendChild(img);
+    listItem.appendChild(title);
+    listItem.appendChild(cp);
+    node.appendChild(listItem);
   }
-  html += "</div>";
-  $list.innerHTML = html;
+  $list.appendChild(node);
 }
 
 function getData(url) {
@@ -40,10 +64,23 @@ function getData(url) {
     });
 }
 
+function showLoading() {
+  $loadingIcon.style.display = "";
+}
+
+function hideLoading() {
+  $loadingIcon.style.display = "none";
+}
+
 for (let i = 0; i < tabs.length; i += 1) {
   tabs[i].DOM.addEventListener("click", (event) => {
-    getData(`${BASEURL}${tabs[i].PARAM}`);
-    activateSelectedTab(tabs[i]);
+    showLoading();
+    hideContents();
+    setTimeout(() => {
+      hideLoading();
+      getData(`${BASEURL}${tabs[i].PARAM}`);
+      activateSelectedTab(tabs[i]);
+    }, 1000);
   });
 }
 
@@ -52,3 +89,5 @@ function activateSelectedTab(tab) {
   selectedTab = tab;
   selectedTab.DOM.className = "active";
 }
+
+hideLoading();
