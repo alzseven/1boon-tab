@@ -9,30 +9,37 @@ const $loadingIcon = document
   .querySelector(".text-center");
 const $showMoreBtn = document.querySelector(".btn");
 
-function setList() {
-  $list.innerHTML = `<div class="list-group">
-  <a href="#" class="list-group-item list-group-item-action">
-    <div class="d-flex w-100 justify-content-between">
-      <h5 class="mb-1">List group item heading</h5>
-    </div>
-    <p class="mb-1">Some placeholder content in a paragraph.</p>
-    <small>And some small print.</small>
-  </a>
-  <a href="#" class="list-group-item list-group-item-action">
-    <div class="d-flex w-100 justify-content-between">
-      <h5 class="mb-1">List group item heading</h5>
-    </div>
-    <p class="mb-1">Some placeholder content in a paragraph.</p>
-    <small class="text-muted">And some muted small print.</small>
-  </a>
-  <a href="#" class="list-group-item list-group-item-action">
-    <div class="d-flex w-100 justify-content-between">
-      <h5 class="mb-1">List group item heading</h5>
-    </div>
-    <p class="mb-1">Some placeholder content in a paragraph.</p>
-    <small class="text-muted">And some muted small print.</small>
-  </a>
-  </div>`;
+const tabs = [
+  { DOM: $tabs[0], PARAM: PARAM_RECENT },
+  { DOM: $tabs[1], PARAM: PARAM_HOT },
+  { DOM: $tabs[2], PARAM: PARAM_POPULAR },
+];
+
+function setList(json) {
+  let html = '<div class="list-group">';
+  for (let i = 0; i < json.length; i += 1) {
+    html += `<a href="${json[i]["url"]}" class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between">
+              <img src="${json[i]["img"]}" class="img img-thumbnail"></img>
+            </div>
+            <p class="mb-1">${json[i]["title"]}</p>
+            <small>${json[i]["cp"]}</small>
+          </a>`;
+  }
+  html += "</div>";
+  $list.innerHTML = html;
 }
 
-setList();
+function getData(url) {
+  fetch(url)
+    .then((response) => response.json())
+    .then((json) => {
+      setList(json);
+    });
+}
+
+for (let i = 0; i < tabs.length; i += 1) {
+  tabs[i].DOM.addEventListener("click", (event) => {
+    getData(`${BASEURL}${tabs[i].PARAM}`);
+  });
+}
