@@ -8,33 +8,35 @@ const $loadingIcon = document
   .getElementById('list')
   .querySelector('.text-center');
 const $showMoreBtn = document.querySelector('.btn');
-
+const listgroup = document.createElement('div');
+listgroup.className = 'list-group-item';
+listgroup.classList.add('list-group-item-action');
+$list.prepend(listgroup);
+const $listGroup = $list.querySelector('.list-group-item');
 const tabs = [
-  { DOM: $tabs[0], PARAM: PARAM_RECENT },
-  { DOM: $tabs[1], PARAM: PARAM_HOT },
-  { DOM: $tabs[2], PARAM: PARAM_POPULAR },
+  { node: $tabs[0], url: `${BASEURL}${PARAM_RECENT}` },
+  { node: $tabs[1], url: `${BASEURL}${PARAM_HOT}` },
+  { node: $tabs[2], url: `${BASEURL}${PARAM_POPULAR}` },
 ];
 
-let selectedTab = tabs[0];
-let maxListItemNumber = 10;
-let lastItemListNumber = 0;
+const listItemNumberPerLoad = 10;
+let selectedTab;
+let maxListItemNumber = 0;
 
 function hideContents() {
-  maxListItemNumber = 10;
-  lastItemListNumber = 0;
-  $list.childNodes.forEach((n) => {
-    if (n !== $loadingIcon) {
-      $list.removeChild(n);
-    }
-  });
+  maxListItemNumber = listItemNumberPerLoad;
+
+  for (let i = $listGroup.children.length - 1; i >= 0; i -= 1) {
+    $listGroup.removeChild($listGroup.children[i]);
+  }
+  $listGroup.style.display = 'none';
 }
 
-function setList(json) {
-  const node = document.createElement('div');
-  node.className = 'list-group';
+function showListItems(json) {
+  $listGroup.style.display = 'block';
 
   for (
-    let i = lastItemListNumber;
+    let i = $listGroup.children.length;
     i < json.length && i < maxListItemNumber;
     i += 1
   ) {
@@ -58,23 +60,20 @@ function setList(json) {
     listItem.appendChild(img);
     listItem.appendChild(title);
     listItem.appendChild(cp);
-    node.appendChild(listItem);
-    lastItemListNumber += 1;
+    $listGroup.appendChild(listItem);
   }
-  $list.insertBefore(node, $loadingIcon);
-  //$list.prepend(node);
 }
 
-function getData(url) {
+function showFetchedData(url) {
   fetch(url)
     .then((response) => response.json())
     .then((json) => {
-      setList(json);
+      showListItems(json);
     });
 }
 
 function showLoading() {
-  $loadingIcon.style.display = '';
+  $loadingIcon.style.display = 'block';
 }
 
 function hideLoading() {
@@ -82,30 +81,36 @@ function hideLoading() {
 }
 
 function activateSelectedTab(tab) {
-  selectedTab.DOM.className = '';
+  if (selectedTab !== undefined) {
+    selectedTab.node.className = '';
+  }
   selectedTab = tab;
-  selectedTab.DOM.className = 'active';
+  selectedTab.node.className = 'active';
 }
 
-for (let i = 0; i < tabs.length; i += 1) {
-  tabs[i].DOM.addEventListener('click', () => {
-    showLoading();
-    hideContents();
-    setTimeout(() => {
-      hideLoading();
-      getData(`${BASEURL}${tabs[i].PARAM}`);
-      activateSelectedTab(tabs[i]);
-    }, 1000);
-  });
-}
-
-$showMoreBtn.addEventListener('click', () => {
+function onClickTab(tab) {
+  hideContents();
+  activateSelectedTab(tab);
   showLoading();
   setTimeout(() => {
     hideLoading();
-    maxListItemNumber += 10;
-    getData(`${BASEURL}${selectedTab.PARAM}`);
+    showFetchedData(tab.url);
   }, 1000);
-});
+}
 
-hideLoading();
+function onClickShowMore() {
+  showLoading();
+  setTimeout(() => {
+    hideLoading();
+    maxListItemNumber += listItemNumberPerLoad;
+    showFetchedData(selectedTab.url);
+  }, 1000);
+}
+
+tabs.forEach((tab) => {
+  tab.node.addEventListener('click', () => {
+    onClickTab(tab);
+  });
+});
+$showMoreBtn.addEventListener('click', onClickShowMore);
+onClickTab(tabs[0]);
